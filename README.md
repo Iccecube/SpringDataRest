@@ -2,7 +2,7 @@
 git clone https://github.com/Iccecube/SpringDataRest.git
 cd SpringDataRest
 
-# 2. Démarrer tous les services (le .env est déjà inclus)
+# 2. Démarrer tous les services 
 docker compose up -d
 
 # 3. Vérifier le statut
