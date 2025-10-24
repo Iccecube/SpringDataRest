@@ -1,0 +1,76 @@
+version: "3.9"
+
+services:
+  mysqldb:
+    image: mysql:8.0
+    container_name: mysqldb
+    restart: always
+    environment:
+      MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+    ports:
+      - "3307:3306"
+    networks:
+      - app-network
+
+  springboot-app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: springboot-app
+    restart: always
+    depends_on:
+      - mysqldb
+    environment:
+      MYSQL_HOST: mysqldb
+      MYSQL_PORT: 3306
+      MYSQL_DATABASE: ${MYSQL_DATABASE}
+      MYSQL_USER: ${MYSQL_USER}
+      MYSQL_PASSWORD: ${MYSQL_PASSWORD}
+      SPRING_PORT: 8080
+    ports:
+      - "8080:8080"
+    networks:
+      - app-network
+
+  react-app:
+    build:
+      context: ./src/main/webapp/reactjs
+      dockerfile: Dockerfile
+    container_name: react-app
+    restart: always
+    depends_on:
+      - springboot-app
+    ports:
+      - "3000:80"
+    networks:
+      - app-network
+
+  prometheus:
+    image: prom/prometheus
+    container_name: prometheus
+    volumes:
+      - ./prometheus.yml:/etc/prometheus/prometheus.yml
+    ports:
+      - "9091:9090"
+    networks:
+      - app-network
+
+  grafana:
+    image: grafana/grafana
+    container_name: grafana
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+    ports:
+      - "3001:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - app-network
+
+networks:
+  app-network:
+    driver: bridge
